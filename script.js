@@ -1,5 +1,5 @@
 // API Configuration - Using OpenWeatherMap Free API (No backend needed)
-const API_KEY = 'bbbcffa2913e04cc28fef0414c401197 '; // You need to get this from OpenWeatherMap
+const API_KEY = 'your_api_key_here'; // REPLACE WITH YOUR ACTUAL API KEY from https://openweathermap.org/api
 const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
 // Global State (everything stored in localStorage)
@@ -36,10 +36,13 @@ function init() {
     updateLastUpdate();
     loadSettings();
     
-    // Set default city on load
+    // Set default city on load or show demo
     if (recentSearches.length > 0) {
         document.getElementById('cityInput').value = recentSearches[0];
         searchCity();
+    } else {
+        // Show demo data on first load
+        showDemoData();
     }
 }
 
@@ -54,9 +57,21 @@ async function searchCity() {
     try {
         showLoading(true);
         
+        // Check if API key is configured
+        if (!API_KEY || API_KEY === 'your_api_key_here') {
+            // Use mock data if no API key
+            useMockData(city);
+            return;
+        }
+
         // First get coordinates for the city
         const geoResponse = await fetch(`${API_BASE_URL}/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`);
-        if (!geoResponse.ok) throw new Error('City not found');
+        if (!geoResponse.ok) {
+            if (geoResponse.status === 401) {
+                throw new Error('Invalid API key. Please check your OpenWeatherMap API key.');
+            }
+            throw new Error('City not found');
+        }
 
         const data = await geoResponse.json();
         
@@ -77,7 +92,7 @@ async function searchCity() {
                 windDirection: data.wind.deg || 0,
                 uvIndex: Math.floor(Math.random() * 11) + 1 // Mock UV data
             },
-            forecast: generateMockForecast(data.name)
+            forecast: await generateForecast(data.coord.lat, data.coord.lon)
         };
 
         displayWeatherData(weatherData);
@@ -88,9 +103,139 @@ async function searchCity() {
     } catch (error) {
         alert('Error: ' + error.message);
         console.error('Search error:', error);
+        
+        // Fallback to mock data on error
+        useMockData(city);
     } finally {
         showLoading(false);
     }
+}
+
+// Generate actual forecast from API
+async function generateForecast(lat, lon) {
+    if (!API_KEY || API_KEY === 'your_api_key_here') {
+        return generateMockForecast('Unknown');
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
+        if (!response.ok) throw new Error('Forecast data unavailable');
+        
+        const data = await response.json();
+        const dailyForecast = [];
+        
+        // Process 5-day forecast (OpenWeatherMap provides 3-hour intervals)
+        for (let i = 0; i < data.list.length; i += 8) {
+            const dayData = data.list[i];
+            const date = new Date(dayData.dt * 1000);
+            
+            dailyForecast.push({
+                date: date.toISOString(),
+                high: Math.round(dayData.main.temp_max),
+                low: Math.round(dayData.main.temp_min),
+                description: dayData.weather[0].description,
+                icon: dayData.weather[0].icon
+            });
+            
+            if (dailyForecast.length >= 5) break;
+        }
+        
+        return dailyForecast;
+    } catch (error) {
+        console.warn('Using mock forecast data');
+        return generateMockForecast('Unknown');
+    }
+}
+
+// Use mock data when API is unavailable
+function useMockData(city) {
+    const mockData = {
+        current: {
+            city: city,
+            country: 'Demo',
+            temperature: Math.floor(Math.random() * 30) + 10,
+            feelsLike: Math.floor(Math.random() * 30) + 10,
+            humidity: Math.floor(Math.random() * 50) + 30,
+            pressure: Math.floor(Math.random() * 100) + 1000,
+            windSpeed: (Math.random() * 10).toFixed(1),
+            visibility: Math.floor(Math.random() * 10) + 5,
+            description: 'Partly Cloudy',
+            icon: '02d',
+            dewPoint: Math.floor(Math.random() * 15) + 5,
+            windDirection: Math.floor(Math.random() * 360),
+            uvIndex: Math.floor(Math.random() * 11) + 1
+        },
+        forecast: generateMockForecast(city)
+    };
+    
+    displayWeatherData(mockData);
+    currentCity = mockData.current;
+    addToRecentSearches(city);
+    
+    // Show API key warning
+    if (!API_KEY || API_KEY === 'your_api_key_here') {
+        showApiWarning();
+    }
+}
+
+// Show demo data on initial load
+function showDemoData() {
+    const demoCities = ['New York', 'London', 'Tokyo', 'Paris', 'Sydney'];
+    const randomCity = demoCities[Math.floor(Math.random() * demoCities.length)];
+    document.getElementById('cityInput').value = randomCity;
+    useMockData(randomCity);
+}
+
+// Show API key warning
+function showApiWarning() {
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'apiWarning';
+    warningDiv.style.cssText = `
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        font-size: 0.9em;
+    `;
+    warningDiv.innerHTML = `
+        🔧 <strong>Demo Mode:</strong> Please add your OpenWeatherMap API key to get real weather data.
+        <a href="https://openweathermap.org/api" target="_blank" style="color: #856404; text-decoration: underline;">
+            Get free API key
+        </a>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(warningDiv, container.firstChild);
+}
+
+function generateMockForecast(cityName) {
+    const forecast = [];
+    const baseTemp = Math.floor(Math.random() * 25) + 10; // Base temp between 10-35°C
+    
+    for (let i = 0; i < 5; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        
+        const tempVariation = Math.floor(Math.random() * 8) - 4; // -4 to +4 variation
+        const high = baseTemp + tempVariation + 3;
+        const low = baseTemp + tempVariation - 3;
+        
+        const conditions = ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy', 'Stormy'];
+        const description = conditions[Math.floor(Math.random() * conditions.length)];
+        
+        forecast.push({
+            date: date.toISOString(),
+            high: high,
+            low: low,
+            description: description,
+            icon: '02d'
+        });
+    }
+    
+    return forecast;
 }
 
 function displayWeatherData(data) {
@@ -128,32 +273,6 @@ function displayWeatherData(data) {
     updateLastUpdate();
 }
 
-function generateMockForecast(cityName) {
-    const forecast = [];
-    const baseTemp = Math.floor(Math.random() * 25) + 10; // Base temp between 10-35°C
-    
-    for (let i = 0; i < 7; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
-        
-        const tempVariation = Math.floor(Math.random() * 8) - 4; // -4 to +4 variation
-        const high = baseTemp + tempVariation + 3;
-        const low = baseTemp + tempVariation - 3;
-        
-        const conditions = ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy', 'Stormy'];
-        const description = conditions[Math.floor(Math.random() * conditions.length)];
-        
-        forecast.push({
-            date: date.toISOString(),
-            high: high,
-            low: low,
-            description: description
-        });
-    }
-    
-    return forecast;
-}
-
 function displayForecast(forecast) {
     const forecastGrid = document.getElementById('forecastGrid');
     forecastGrid.innerHTML = '';
@@ -166,7 +285,7 @@ function displayForecast(forecast) {
         card.className = 'forecast-day-card';
         card.innerHTML = `
             <div class="forecast-date">${dayName}</div>
-            <div class="forecast-icon"><i class="fas fa-cloud-sun"></i></div>
+            <div class="forecast-icon"><i class="${weatherIcons[day.icon] || 'fas fa-cloud-sun'}"></i></div>
             <div style="font-size: 0.9em; margin-bottom: 10px; text-transform: capitalize;">${day.description}</div>
             <div class="forecast-temps">
                 <div><strong>${Math.round(day.high)}°</strong></div>
@@ -279,6 +398,13 @@ function getCurrentLocation() {
 async function fetchWeatherByCoords(lat, lon) {
     try {
         showLoading(true);
+        
+        // Check if API key is available
+        if (!API_KEY || API_KEY === 'your_api_key_here') {
+            useMockData('Your Location');
+            return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
         if (!response.ok) throw new Error('Location not found');
 
@@ -301,7 +427,7 @@ async function fetchWeatherByCoords(lat, lon) {
                 windDirection: data.wind.deg || 0,
                 uvIndex: Math.floor(Math.random() * 11) + 1
             },
-            forecast: generateMockForecast(data.name)
+            forecast: await generateForecast(lat, lon)
         };
 
         displayWeatherData(weatherData);
@@ -309,6 +435,7 @@ async function fetchWeatherByCoords(lat, lon) {
         addToRecentSearches(data.name);
     } catch (error) {
         alert('Error fetching location weather: ' + error.message);
+        useMockData('Your Location');
     } finally {
         showLoading(false);
     }
@@ -375,11 +502,17 @@ function updateLastUpdate() {
 }
 
 function showLoading(show) {
-    // Simple loading state - you can enhance this with a proper spinner
+    // Simple loading state
     const buttons = document.querySelectorAll('button');
     buttons.forEach(btn => {
         btn.disabled = show;
     });
+    
+    // Show/hide loading indicator
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = show ? 'block' : 'none';
+    }
 }
 
 // Mock authentication functions (since no backend)
@@ -432,5 +565,4 @@ document.addEventListener('DOMContentLoaded', function() {
             searchCity();
         }
     });
-
 });
