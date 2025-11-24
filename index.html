@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Weather App with MongoDB - Professional Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Navigation -->
+        <div class="navbar">
+            <div class="navbar-brand">
+                <i class="fas fa-cloud-sun"></i> WeatherPro DB
+            </div>
+            <div class="navbar-menu">
+                <a href="#" class="navbar-link" onclick="showSection('home')">Home</a>
+                <a href="#" class="navbar-link" onclick="showSection('favorites')">Favorites</a>
+                <a href="#" class="navbar-link" onclick="showSection('alerts')">Alerts</a>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="authBtn" onclick="toggleAuth()">
+                    <i class="fas fa-user"></i> Login
+                </button>
+                <button class="btn btn-secondary" onclick="toggleDarkMode()">
+                    <i class="fas fa-moon"></i> Dark
+                </button>
+                <button class="btn btn-primary" onclick="toggleSettings()">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Auth Section -->
+        <div class="auth-section" id="authSection">
+            <h2 class="auth-title">Login / Register</h2>
+            <div class="form-group">
+                <label for="authEmail">Email:</label>
+                <input type="email" id="authEmail" placeholder="Enter your email" aria-label="Email address">
+            </div>
+            <div class="form-group">
+                <label for="authPassword">Password:</label>
+                <input type="password" id="authPassword" placeholder="Enter your password" aria-label="Password">
+            </div>
+            <div class="auth-buttons">
+                <button class="btn btn-success" onclick="loginUser()">Login</button>
+                <button class="btn btn-primary" onclick="registerUser()">Register</button>
+            </div>
+            <div id="authMessage" class="auth-message"></div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <input type="text" id="cityInput" class="search-input" placeholder="Search for a city..." aria-label="Search city">
+                <button class="btn btn-primary" onclick="searchCity()">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <button class="btn btn-secondary" onclick="getCurrentLocation()">
+                    <i class="fas fa-location-dot"></i> My Location
+                </button>
+            </div>
+            <div class="recent-searches-container">
+                <strong class="recent-label">Recent Searches:</strong>
+                <div class="recent-searches" id="recentSearches"></div>
+            </div>
+        </div>
+
+        <!-- Home Section -->
+        <div id="homeSection" class="section active">
+            <!-- Weather Main -->
+            <div class="weather-main">
+                <div class="current-weather-card gradient">
+                    <div class="weather-location-info">
+                        <div class="location-text">
+                            <h1 id="cityName">--</h1>
+                            <p id="weatherDate">--</p>
+                        </div>
+                        <div id="weatherMainIcon" class="weather-now-icon">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                    </div>
+
+                    <div class="temperature-display">
+                        <span id="temperature">--</span>
+                        <span class="temperature-unit">°C</span>
+                    </div>
+
+                    <div class="weather-condition" id="weatherCondition">--</div>
+
+                    <div class="weather-info-row">
+                        <div class="info-item">
+                            <div class="info-label">Feels Like</div>
+                            <div class="info-value" id="feelsLike">--°</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Humidity</div>
+                            <div class="info-value" id="humidity">--%</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Wind</div>
+                            <div class="info-value" id="windSpeed">-- m/s</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">UV Index</div>
+                            <div class="info-value" id="uvIndex">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="weather-sidebar">
+                    <!-- Alerts -->
+                    <div class="sidebar-section">
+                        <div class="card-title">⚠️ Weather Alerts</div>
+                        <div class="alerts-container" id="alertsContainer">
+                            <p class="no-alerts">No active alerts</p>
+                        </div>
+                    </div>
+
+                    <!-- Add to Favorites -->
+                    <div class="sidebar-section">
+                        <button class="btn btn-primary favorite-btn" onclick="addToFavorites()">
+                            <i class="fas fa-star"></i> Add to Favorites
+                        </button>
+                        <div class="card-title">Air Quality</div>
+                        <div class="details-grid">
+                            <div class="detail-card">
+                                <div class="detail-icon"><i class="fas fa-leaf"></i></div>
+                                <div class="detail-name">AQI</div>
+                                <div class="detail-value" id="aqi">--</div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-icon"><i class="fas fa-wind"></i></div>
+                                <div class="detail-name">PM2.5</div>
+                                <div class="detail-value" id="pm25">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="sidebar-section">
+                <div class="card-title">📊 Detailed Information</div>
+                <div class="details-grid">
+                    <div class="detail-card">
+                        <div class="detail-icon"><i class="fas fa-eye"></i></div>
+                        <div class="detail-name">Visibility</div>
+                        <div class="detail-value" id="visibility">--</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-icon"><i class="fas fa-gauge"></i></div>
+                        <div class="detail-name">Pressure</div>
+                        <div class="detail-value" id="pressure">--</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-icon"><i class="fas fa-droplet"></i></div>
+                        <div class="detail-name">Dew Point</div>
+                        <div class="detail-value" id="dewPoint">--°</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-icon"><i class="fas fa-compass"></i></div>
+                        <div class="detail-name">Wind Direction</div>
+                        <div class="detail-value" id="windDirection">--°</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-icon"><i class="fas fa-water"></i></div>
+                        <div class="detail-name">Chance of Rain</div>
+                        <div class="detail-value" id="precipChance">--%</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-icon"><i class="fas fa-sun"></i></div>
+                        <div class="detail-name">UV Index</div>
+                        <div class="detail-value" id="uvDetail">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast -->
+            <div class="sidebar-section">
+                <div class="card-title">📅 7-Day Forecast</div>
+                <div class="forecast-grid" id="forecastGrid">
+                    <!-- Forecast cards inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Section -->
+        <div id="favoritesSection" class="section">
+            <div class="sidebar-section">
+                <div class="card-title">⭐ Favorite Cities</div>
+                <div class="favorites-container" id="favoritesContainer">
+                    <p class="no-favorites">No favorites added yet. Add cities from home screen.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div id="alertsSection" class="section">
+            <div class="sidebar-section">
+                <div class="card-title">🚨 All Alerts</div>
+                <div class="alerts-container" id="allAlerts">
+                    <p class="no-alerts">No active alerts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>WeatherPro DB</strong> - Advanced Weather Platform with MongoDB</p>
+            <p class="last-update">
+                Last updated: <span id="lastUpdate">--:--</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <button class="settings-close" onclick="toggleSettings()" aria-label="Close settings">✕</button>
+        <h2 class="settings-title">Settings</h2>
+
+        <div class="settings-group">
+            <label class="settings-label">Temperature Unit</label>
+            <select id="tempUnit" class="settings-select" onchange="saveSetting('tempUnit', this.value)">
+                <option value="celsius">Celsius (°C)</option>
+                <option value="fahrenheit">Fahrenheit (°F)</option>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <label class="settings-label">Wind Speed Unit</label>
+            <select id="windUnit" class="settings-select" onchange="saveSetting('windUnit', this.value)">
+                <option value="m/s">m/s</option>
+                <option value="km/h">km/h</option>
+                <option value="mph">mph</option>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <label class="settings-label">Dark Mode</label>
+            <label class="toggle-label">
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+                Enable Dark Mode
+            </label>
+        </div>
+
+        <div class="logout-section">
+            <button class="btn btn-danger logout-btn" onclick="logoutUser()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
