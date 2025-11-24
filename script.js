@@ -1,5 +1,5 @@
 // API Configuration - Using OpenWeatherMap Free API (No backend needed)
-const API_KEY = 'your_api_key_here'; // You need to get this from OpenWeatherMap
+const API_KEY = 'bbbcffa2913e04cc28fef0414c401197 '; // You need to get this from OpenWeatherMap
 const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
 // Global State (everything stored in localStorage)
@@ -432,4 +432,5 @@ document.addEventListener('DOMContentLoaded', function() {
             searchCity();
         }
     });
+
 });
