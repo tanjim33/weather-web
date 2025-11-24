@@ -1,5 +1,5 @@
 // API Configuration - Using OpenWeatherMap Free API (No backend needed)
-const API_KEY = 'your_api_key_here'; // REPLACE WITH YOUR ACTUAL API KEY from https://openweathermap.org/api
+const API_KEY = 'cao6ba1fc7f59758b815d873d39e69816';
 const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
 // Global State (everything stored in localStorage)
@@ -57,13 +57,6 @@ async function searchCity() {
     try {
         showLoading(true);
         
-        // Check if API key is configured
-        if (!API_KEY || API_KEY === 'your_api_key_here') {
-            // Use mock data if no API key
-            useMockData(city);
-            return;
-        }
-
         // First get coordinates for the city
         const geoResponse = await fetch(`${API_BASE_URL}/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`);
         if (!geoResponse.ok) {
@@ -75,7 +68,7 @@ async function searchCity() {
 
         const data = await geoResponse.json();
         
-        // Create mock current weather data
+        // Create current weather data
         const weatherData = {
             current: {
                 city: data.name,
@@ -90,7 +83,7 @@ async function searchCity() {
                 icon: data.weather[0].icon,
                 dewPoint: Math.round(data.main.temp - ((100 - data.main.humidity) / 5)),
                 windDirection: data.wind.deg || 0,
-                uvIndex: Math.floor(Math.random() * 11) + 1 // Mock UV data
+                uvIndex: Math.floor(Math.random() * 11) + 1
             },
             forecast: await generateForecast(data.coord.lat, data.coord.lon)
         };
@@ -113,10 +106,6 @@ async function searchCity() {
 
 // Generate actual forecast from API
 async function generateForecast(lat, lon) {
-    if (!API_KEY || API_KEY === 'your_api_key_here') {
-        return generateMockForecast('Unknown');
-    }
-
     try {
         const response = await fetch(`${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
         if (!response.ok) throw new Error('Forecast data unavailable');
@@ -171,11 +160,6 @@ function useMockData(city) {
     displayWeatherData(mockData);
     currentCity = mockData.current;
     addToRecentSearches(city);
-    
-    // Show API key warning
-    if (!API_KEY || API_KEY === 'your_api_key_here') {
-        showApiWarning();
-    }
 }
 
 // Show demo data on initial load
@@ -186,40 +170,15 @@ function showDemoData() {
     useMockData(randomCity);
 }
 
-// Show API key warning
-function showApiWarning() {
-    const warningDiv = document.createElement('div');
-    warningDiv.id = 'apiWarning';
-    warningDiv.style.cssText = `
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        color: #856404;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
-        text-align: center;
-        font-size: 0.9em;
-    `;
-    warningDiv.innerHTML = `
-        🔧 <strong>Demo Mode:</strong> Please add your OpenWeatherMap API key to get real weather data.
-        <a href="https://openweathermap.org/api" target="_blank" style="color: #856404; text-decoration: underline;">
-            Get free API key
-        </a>
-    `;
-    
-    const container = document.querySelector('.container');
-    container.insertBefore(warningDiv, container.firstChild);
-}
-
 function generateMockForecast(cityName) {
     const forecast = [];
-    const baseTemp = Math.floor(Math.random() * 25) + 10; // Base temp between 10-35°C
+    const baseTemp = Math.floor(Math.random() * 25) + 10;
     
     for (let i = 0; i < 5; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         
-        const tempVariation = Math.floor(Math.random() * 8) - 4; // -4 to +4 variation
+        const tempVariation = Math.floor(Math.random() * 8) - 4;
         const high = baseTemp + tempVariation + 3;
         const low = baseTemp + tempVariation - 3;
         
@@ -398,19 +357,12 @@ function getCurrentLocation() {
 async function fetchWeatherByCoords(lat, lon) {
     try {
         showLoading(true);
-        
-        // Check if API key is available
-        if (!API_KEY || API_KEY === 'your_api_key_here') {
-            useMockData('Your Location');
-            return;
-        }
 
         const response = await fetch(`${API_BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
         if (!response.ok) throw new Error('Location not found');
 
         const data = await response.json();
         
-        // Create consistent data structure
         const weatherData = {
             current: {
                 city: data.name,
@@ -457,17 +409,14 @@ function toggleDarkMode() {
     const isDarkMode = document.body.classList.contains('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
     
-    // Update dark mode toggle
     document.getElementById('darkModeToggle').checked = isDarkMode;
 }
 
 function showSection(sectionName) {
-    // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active');
     });
     
-    // Show selected section
     document.getElementById(sectionName + 'Section').classList.add('active');
 }
 
@@ -477,19 +426,16 @@ function saveSetting(key, value) {
 }
 
 function loadSettings() {
-    // Load dark mode
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
         document.getElementById('darkModeToggle').checked = true;
     }
     
-    // Load temperature unit
     const tempUnit = localStorage.getItem('tempUnit');
     if (tempUnit) {
         document.getElementById('tempUnit').value = tempUnit;
     }
     
-    // Load wind unit
     const windUnit = localStorage.getItem('windUnit');
     if (windUnit) {
         document.getElementById('windUnit').value = windUnit;
@@ -502,20 +448,13 @@ function updateLastUpdate() {
 }
 
 function showLoading(show) {
-    // Simple loading state
     const buttons = document.querySelectorAll('button');
     buttons.forEach(btn => {
         btn.disabled = show;
     });
-    
-    // Show/hide loading indicator
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    if (loadingIndicator) {
-        loadingIndicator.style.display = show ? 'block' : 'none';
-    }
 }
 
-// Mock authentication functions (since no backend)
+// Mock authentication functions
 function loginUser() {
     const email = document.getElementById('authEmail').value;
     const password = document.getElementById('authPassword').value;
@@ -559,7 +498,6 @@ function logoutUser() {
 document.addEventListener('DOMContentLoaded', function() {
     init();
     
-    // Add enter key support for search
     document.getElementById('cityInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             searchCity();
